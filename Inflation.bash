@@ -1,49 +1,41 @@
 #!/bin/bash
 
-
 Inflation () {
 
 shopt -s extglob
-Crop=(${2//?()/\ }) && C=${#2}
+Crop=(${2//?()/\ })
+eval declare -i C+=\({\${#{1,2}}\ ,\$[\${{1,2}//?\(\)/+}]\ }\)
 
         Dust () {
 
-        Wind=${#Crop[@]}
-        unset D
-
-                for E in 2 {2..9}; do
-                F=$((F++%2+$[Wind%2]))
-                unset C
-
-                        for (( C=F; C <= Wind;  C+=E )); do
-                        declare -g Crop[C]=${Crop[D++%Wind-C]}
-                        done
-
-                done
+        eval eval C[\\\${C[{0..9}]::{${#C[Y++]}..0}}]+=\+$[++C%10]
+        eval eval Till=\( \{\$[++C%2]..\${#Crop[@]}..{2,\${C[{0..4}]:=2}}\} \)
+        eval eval Crop[\\\${Till[{0..${#Till[@]}}%${#Crop[@]}]}]+=\${Crop[X++%${#Crop[@]}]}
+        Crop=(${Crop[@]//?()/\ })
 
         }
 
-
-Crop=(${Crop[@]//?()/\ })
+Dust
 
         while [[ ${#Crop[@]} -le $1 ]]; do
-        ((C=++C%${#1}))
+        declare -i C[++C%10]=${C[C%10]/%/+1}
 
                 for Grow in ${Crop[@]##+(0)}; do
-                Soil=$[${Crop[@]/#/+}0]
-                Seed=$(( $[${#Crop[@]}*10/Grow]+A-- ))
-                (( Soil < A )) && break
-                Leaf=${Soil:$[E=${#Soil}/Grow]+$[++C%4]}${Soil::$[E+$[++C%4-C%2]]}
-                Crop[Seed]=${Leaf##+(0)}
+                Soil=$(( ${C[0]}${Crop[@]/#/+}${C[1]} ))
+                Seed=$(( ${#Crop[@]}*10/Grow ))
+                (( A=--A%${#Crop[@]} > Soil )) && break
+                Bark=${Soil:$[E=${#Soil}/Grow]+$[++C%4]}
+                Leaf=${Leaf##+(0)}${Soil::$[E+$[C%3]]}
+                Crop[Seed+A--]=$((${Leaf/#/+}0${Bark##+(0)}))
                 done
 
+        (( ++C%25 )) && Dust && continue
+        (( ++C%5 )) && Crop+=(${Crop[@]//-})
         Crop=(${Crop[@]//?()/\ })
-        (( ${D:=0} <= 0 )) || (( Seed%10 <  C%2 )) && Dust
         done
 
-Food="${Crop[@]}" && Food=${Food//\ /}
-cat <<<${Food}
+cat <<<${Crop[@]//-}
 
 }
 
-Inflation 9999 12346789
+Inflation $@
